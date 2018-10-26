@@ -29,6 +29,7 @@ function vb_get_form( ) {
     $city = '';
     $phone = '';
     $email = '';
+    $knownfrom = '';
     $category_name = '';
     $success = false;
 
@@ -50,6 +51,8 @@ function vb_get_form( ) {
         else $phone = filter_input(INPUT_POST, 'phone', FILTER_SANITIZE_STRING);
         if(!isset($_POST['email']) || !$_POST['email']) array_push($error, 'email');
         else $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+        if(!isset($_POST['knownfrom']) || !$_POST['knownfrom']) array_push($error, 'knownfrom');
+        else $knownfrom = filter_input(INPUT_POST, 'knownfrom', FILTER_SANITIZE_STRING);
         if(!isset($_POST['category']) || !$_POST['category']) array_push($error, 'category');
         else $category = filter_input(INPUT_POST, 'category', FILTER_SANITIZE_NUMBER_INT);
 
@@ -67,8 +70,8 @@ function vb_get_form( ) {
           if($row) {
               $contact_id = $row['id'];
           } else {
-              $statement = $pdo->prepare("INSERT INTO contacts (name, prename, street, plz, city, phone, email, created_at) VALUES (:name, :prename, :street, :plz, :city, :phone, :email, :created_at)");
-              $statement->execute(array(':name' => $contact_name, ':prename' => $prename, ':street' => $street, ':plz' => $plz, ':city' => $city, ':phone' => $phone, ':email' => $email, ':created_at' => date("Y-m-d H:i:s")));
+              $statement = $pdo->prepare("INSERT INTO contacts (name, prename, street, plz, city, phone, email, knownfrom, created_at) VALUES (:name, :prename, :street, :plz, :city, :phone, :email, :knownfrom, :created_at)");
+              $statement->execute(array(':name' => $contact_name, ':prename' => $prename, ':street' => $street, ':plz' => $plz, ':city' => $city, ':phone' => $phone, ':email' => $email, ':knownfrom' => $knownfrom, ':created_at' => date("Y-m-d H:i:s")));
               $contact_id = $pdo->lastInsertId();
           }
 
@@ -93,8 +96,10 @@ function vb_get_form( ) {
             PLZ / Ort: '.$plz.' '.$city.'<br>
             Telefon: '.$phone.'<br>
             Email: '.$email.'<br>
+            Wie hast du von unserem Turnier erfahren?: '.$knownfrom.'<br>
           ';
           wp_mail( $to, $subject, $body, $headers );
+          //wp_mail( 'praesident@unihockey-team-brunegg.ch', $subject, $body, $headers );
 
           $to = $email;
           $body = '
@@ -107,7 +112,8 @@ function vb_get_form( ) {
             Strasse: '.$street.'<br>
             PLZ / Ort: '.$plz.' '.$city.'<br>
             Telefon: '.$phone.'<br>
-            Email: '.$email.'<br><br>
+            Email: '.$email.'<br>
+            Wie hast du von unserem Turnier erfahren?: '.$knownfrom.'<br><br>
             Weitere Informationen, sowie den genauen Spielplan erhälst du ca. 1 Woche vor dem Turnier.<br>
             Sportliche Grüsse und bis im März<br>
             High Flyers Brunegg
@@ -125,6 +131,7 @@ function vb_get_form( ) {
           $phone = '';
           $email = '';
           $category_name = '';
+          $knownfrom = '';
           $success = true;
 
         }
@@ -168,6 +175,7 @@ function vb_get_form( ) {
                     <label for="category">Kategorie*</label>
                     <select name="category" id="category">
                         <?php
+                            $counter = 0;
                             $sql = "SELECT * FROM categories WHERE ISNULL(deleted_at)";
                             foreach ($pdo->query($sql) as $row) {
                                 if(isset($_POST['category']) && $_POST['category'] == $row['id']) {
@@ -175,6 +183,8 @@ function vb_get_form( ) {
                                 } else {
                                     echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';
                                 }
+                                $counter++;
+                                if($counter == 6) echo '<option disabled>──────────</option>';
                             }
                         ?>
                     </select>
@@ -203,6 +213,10 @@ function vb_get_form( ) {
                 <div class="input-container">
                     <label class="<?= in_array("email", $error) ? "error-label" : '' ?>" for="email">Email*</label>
                     <input class="<?= in_array("email", $error) ? "error-input" : '' ?>" type="text" placeholder="Email" name="email" id="email" value="<?= $email ?>" />
+                </div>
+                <div class="input-container">
+                    <label class="<?= in_array("knownfrom", $error) ? "error-label" : '' ?>" for="knownfrom">Wie hast du von unserem Turnier erfahren?*</label>
+                    <input class="<?= in_array("knownfrom", $error) ? "error-input" : '' ?>" type="text" placeholder="Wie hast du von unserem Turnier erfahren?" name="knownfrom" id="knownfrom" value="<?= $knownfrom ?>" />
                 </div>
                 <div>
                     <input type="submit" value="Absenden" name="submitted" id="submitted" />
